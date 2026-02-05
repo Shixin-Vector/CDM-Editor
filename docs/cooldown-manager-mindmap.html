@@ -105,6 +105,37 @@
             font-size: 14px;
             z-index: 1000;
         }
+        
+        .tooltip {
+            position: fixed;
+            background: rgba(0, 0, 0, 0.95);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            max-width: 400px;
+            z-index: 2000;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            border: 2px solid #2196F3;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+        
+        .tooltip.visible {
+            opacity: 1;
+        }
+        
+        .tooltip .feature-name {
+            font-weight: 700;
+            font-size: 15px;
+            margin-bottom: 8px;
+            color: #64B5F6;
+        }
+        
+        .tooltip .feature-description {
+            line-height: 1.5;
+        }
     </style>
 </head>
 <body>
@@ -112,6 +143,7 @@
         <h3>🗺️ Mindmap Controls</h3>
         <ul>
             <li><strong>Click</strong> nodes to expand/collapse</li>
+            <li><strong>Hover</strong> over features to see descriptions</li>
             <li><strong>Drag</strong> to pan the view</li>
             <li><strong>Scroll</strong> to zoom in/out</li>
         </ul>
@@ -119,6 +151,11 @@
     
     <div class="feature-count">
         <strong>10 Categories</strong> • <strong>100+ Features</strong>
+    </div>
+    
+    <div class="tooltip" id="featureTooltip">
+        <div class="feature-name"></div>
+        <div class="feature-description"></div>
     </div>
     
     <svg id="mindmap"></svg>
@@ -138,158 +175,158 @@
                     name: "Advanced Spell &\nAbility Control",
                     className: "category",
                     children: [
-                        { name: "Show/hide by Spell ID" },
-                        { name: "Manual add/remove spells, buffs, debuffs, items" },
-                        { name: "Custom tracking groups" },
-                        { name: "Ability prioritization & reordering" },
-                        { name: "Automatic trinket tracking" },
-                        { name: "Custom spell bars" },
-                        { name: "Custom item bars (potions, flasks, consumables)" },
-                        { name: "Separate important cooldowns display" },
-                        { name: "Per-icon custom overrides" },
-                        { name: "Class-specific ability presets" },
-                        { name: "Ignore Aura Override controls" },
-                        { name: "Charge spell handling options" }
+                        { name: "Show/hide by Spell ID", description: "Allows you to enter numerical Spell IDs to manually toggle visibility of individual abilities, buffs, or debuffs in your trackers." },
+                        { name: "Manual add/remove spells, buffs, debuffs, items", description: "Lets you add any ability or item to your tracking bars by name or ID, not just what Blizzard pre-selects for you." },
+                        { name: "Custom tracking groups", description: "Create your own organizational folders (like 'Offensive CDs', 'Defensives', 'Procs') and assign abilities to them however you want." },
+                        { name: "Ability prioritization & reordering", description: "Drag-and-drop or set numeric priority to control which abilities appear first/most prominently in your display." },
+                        { name: "Automatic trinket tracking", description: "Automatically detects and adds your equipped trinkets to cooldown trackers without manual configuration." },
+                        { name: "Custom spell bars", description: "Create dedicated tracking bars for specific spells you want to monitor separately from main cooldown groups." },
+                        { name: "Custom item bars (potions, flasks, consumables)", description: "Set up tracking for consumables and usable items so you can monitor potion cooldowns, flask durations, etc." },
+                        { name: "Separate important cooldowns display", description: "Pull critical abilities (like major defensives) into their own standalone tracker away from less important cooldowns." },
+                        { name: "Per-icon custom overrides", description: "Override global settings for individual abilities (make one icon larger, position it differently, use unique colors, etc.)." },
+                        { name: "Class-specific ability presets", description: "Pre-configured tracking lists tailored to each class/spec that include all important abilities out of the box." },
+                        { name: "Ignore Aura Override controls", description: "Prevents certain buffs from being moved or modified by Blizzard's automatic aura management system." },
+                        { name: "Charge spell handling options", description: "Controls whether charge-based abilities (like Fire Blast) show on cooldown immediately or only when all charges are depleted." }
                     ]
                 },
                 {
                     name: "Flexible Layout &\nPositioning System",
                     className: "category",
                     children: [
-                        { name: "Multiple layout patterns (rows, columns, grids, free-form)" },
-                        { name: "Customizable orientation & growth direction" },
-                        { name: "Alignment options (left, center, right)" },
-                        { name: "Flexible anchor points" },
-                        { name: "Custom spacing/padding controls" },
-                        { name: "Dynamic adaptive layouts" },
-                        { name: "Position anywhere on screen" },
-                        { name: "Anchor to other frames" },
-                        { name: "Enhanced snapping & alignment guides" },
-                        { name: "Screen boundary protection" },
-                        { name: "Multiple independent tracking windows" }
+                        { name: "Multiple layout patterns (rows, columns, grids, free-form)", description: "Choose from organized row/column grids or completely custom free-form positioning for your cooldown icons." },
+                        { name: "Customizable orientation & growth direction", description: "Set whether new icons appear horizontally or vertically, and which direction they grow (up, down, left, right)." },
+                        { name: "Alignment options (left, center, right)", description: "Align your cooldown icons to the left, center, or right within their container for cleaner organization." },
+                        { name: "Flexible anchor points", description: "Icons can anchor from any corner or edge, not just growing from the center like default UI." },
+                        { name: "Custom spacing/padding controls", description: "Adjust the exact pixel spacing between icons and the padding around groups to match your aesthetic." },
+                        { name: "Dynamic adaptive layouts", description: "Icons automatically reposition themselves based on which abilities are active, preventing gaps in your tracking grid." },
+                        { name: "Position anywhere on screen", description: "Place tracking windows wherever you want without being limited to Blizzard's Edit Mode grid system." },
+                        { name: "Anchor to other frames", description: "Attach your trackers to unit frames, action bars, or any other UI element with precise X/Y offset control." },
+                        { name: "Enhanced snapping & alignment guides", description: "Visual guides appear when positioning frames to help you align them perfectly with other UI elements." },
+                        { name: "Screen boundary protection", description: "Prevents your tracking frames from accidentally being positioned off-screen where you can't see them." },
+                        { name: "Multiple independent tracking windows", description: "Create several separate tracking windows with completely different layouts and positions." }
                     ]
                 },
                 {
                     name: "Comprehensive Visual\nCustomization",
                     className: "category",
                     children: [
-                        { name: "Custom icon sizes & bar lengths" },
-                        { name: "Independent element scaling" },
-                        { name: "Border customization" },
-                        { name: "Masque skin support" },
-                        { name: "Independent text scaling & positioning" },
-                        { name: "Keybind display on icons" },
-                        { name: "Font settings for all text elements" },
-                        { name: "Individual element positioning" },
-                        { name: "Minimalist aesthetic options" },
-                        { name: "Custom cooldown swipe colors" },
-                        { name: "Proc glow customization" },
-                        { name: "Desaturation control for inactive abilities" }
+                        { name: "Custom icon sizes & bar lengths", description: "Set the exact pixel dimensions for icons and bars, making important cooldowns larger and less critical ones smaller." },
+                        { name: "Independent element scaling", description: "Scale different types of trackers independently (make buffs smaller, cooldowns larger, etc.) without affecting the whole UI." },
+                        { name: "Border customization", description: "Choose border styles (pixel perfect, rounded, glowing) and adjust thickness, or remove borders entirely for a cleaner look." },
+                        { name: "Masque skin support", description: "Apply popular icon skin addons like Masque to give your cooldowns a consistent look with the rest of your UI." },
+                        { name: "Independent text scaling & positioning", description: "Resize and reposition cooldown numbers, stack counts, and duration text separately from the icons themselves." },
+                        { name: "Keybind display on icons", description: "Show your keybindings directly on cooldown icons so you know which key to press without looking at action bars." },
+                        { name: "Font settings for all text elements", description: "Customize fonts, sizes, colors, and outlines for cooldown timers, stack numbers, keybinds, and duration text." },
+                        { name: "Individual element positioning", description: "Move text, icons, and borders independently within a frame for pixel-perfect customization." },
+                        { name: "Minimalist aesthetic options", description: "Clean, simplified visual modes that remove clutter and focus on essential information only." },
+                        { name: "Custom cooldown swipe colors", description: "Change the color of the cooldown sweep animation to match your UI theme or make it more visible." },
+                        { name: "Proc glow customization", description: "Adjust the color, intensity, and animation style of the glow effect when abilities become available." },
+                        { name: "Desaturation control for inactive abilities", description: "Control whether inactive abilities appear in full color, greyscale, or somewhere in between." }
                     ]
                 },
                 {
                     name: "Color & Resource\nTracking",
                     className: "category",
                     children: [
-                        { name: "Custom power bar colors" },
-                        { name: "Secondary power color controls" },
-                        { name: "Cast bar customization" },
-                        { name: "Cast bar visibility toggle" },
-                        { name: "Resource tracking (mana, energy, rage, focus)" },
-                        { name: "Complete essence recharge tracking" },
-                        { name: "Buff/debuff tracking with stacks" },
-                        { name: "Duration tracking for all abilities" },
-                        { name: "Visual resource threshold indicators" }
+                        { name: "Custom power bar colors", description: "Choose colors for your primary resource bar (mana, rage, energy, etc.) to match your preference or UI theme." },
+                        { name: "Secondary power color controls", description: "Customize colors for secondary resources like combo points, holy power, soul shards, or chi." },
+                        { name: "Cast bar customization", description: "Configure the size, position, color, and styling of your cast bar to integrate with cooldown tracking." },
+                        { name: "Cast bar visibility toggle", description: "Hide the cast bar entirely if you find it distracting or already have it tracked elsewhere." },
+                        { name: "Resource tracking (mana, energy, rage, focus)", description: "Display your primary and secondary resources with customizable bars that update in real-time." },
+                        { name: "Complete essence recharge tracking", description: "Track Evoker essence recharge with partial regeneration timing showing exactly when your next essence will be available." },
+                        { name: "Buff/debuff tracking with stacks", description: "Monitor buff and debuff stacks with clear visual indicators showing current count and maximum stacks." },
+                        { name: "Duration tracking for all abilities", description: "Display remaining duration on all buffs, debuffs, and cooldowns with configurable text formatting." },
+                        { name: "Visual resource threshold indicators", description: "Highlight or change colors when you reach specific resource amounts (e.g., enough mana to cast an expensive spell)." }
                     ]
                 },
                 {
                     name: "Information Density\n& Organization",
                     className: "category",
                     children: [
-                        { name: "Categorized tracking windows" },
-                        { name: "Conditional display rules" },
-                        { name: "Filter options to reduce clutter" },
-                        { name: "Grouped related abilities" },
-                        { name: "Custom spell icon groups" },
-                        { name: "Smart sorting options" },
-                        { name: "Separate trackers for content types (PvE/PvP)" },
-                        { name: "Prevent icon overlap" }
+                        { name: "Categorized tracking windows", description: "Separate trackers into distinct categories like offensive cooldowns, defensives, utilities, buffs, debuffs, and resources." },
+                        { name: "Conditional display rules", description: "Set rules to show trackers only in combat, only out of combat, only when abilities are available, or only when on cooldown." },
+                        { name: "Filter options to reduce clutter", description: "Hide abilities based on criteria like cooldown length, passive procs, or importance to reduce visual noise." },
+                        { name: "Grouped related abilities", description: "Automatically group related abilities together (e.g., combo point builders with finishers, essence spenders with generators)." },
+                        { name: "Custom spell icon groups", description: "Create custom groups beyond what Cooldown Manager offers to track specific ability combinations or rotations." },
+                        { name: "Smart sorting options", description: "Automatically sort abilities by remaining cooldown time, importance level, alphabetically, or your custom order." },
+                        { name: "Separate trackers for content types (PvE/PvP)", description: "Load different tracking configurations automatically when entering PvE dungeons/raids versus PvP arenas/battlegrounds." },
+                        { name: "Prevent icon overlap", description: "Ensure icons never overlap each other even with dynamic positioning or when many abilities are active simultaneously." }
                     ]
                 },
                 {
                     name: "Profile & Configuration\nManagement",
                     className: "category",
                     children: [
-                        { name: "Profile import/export" },
-                        { name: "Dual spec support" },
-                        { name: "Saved loadout system (one-click switching)" },
-                        { name: "Per-character, per-spec, account-wide options" },
-                        { name: "Settings migration from legacy addons" },
-                        { name: "Database management" },
-                        { name: "Simplified configuration wizard" },
-                        { name: "Profile templates (tank, healer, DPS)" },
-                        { name: "Backup and restore for profiles" }
+                        { name: "Profile import/export", description: "Share your complete addon configuration with others via export strings, or import their setups to try them out." },
+                        { name: "Dual spec support", description: "Automatically switch tracking profiles when you change specializations so each spec has its own customized setup." },
+                        { name: "Saved loadout system (one-click switching)", description: "Create named profiles (Raid, M+, PvP, Leveling) and switch between them instantly with a single click." },
+                        { name: "Per-character, per-spec, account-wide options", description: "Choose whether settings apply to all characters, just one character, specific specs, or account-wide." },
+                        { name: "Settings migration from legacy addons", description: "Import configurations from WeakAuras, OmniCD, or other cooldown tracking addons to ease your transition." },
+                        { name: "Database management", description: "Built-in tools to clean up old profiles, reset corrupted settings, and optimize saved variable storage." },
+                        { name: "Simplified configuration wizard", description: "Step-by-step setup process that helps new users configure the addon without being overwhelmed by options." },
+                        { name: "Profile templates (tank, healer, DPS)", description: "Pre-made configurations optimized for each role that you can use as-is or customize to your liking." },
+                        { name: "Backup and restore for profiles", description: "Create backups of your configurations before major changes and restore them if something goes wrong." }
                     ]
                 },
                 {
                     name: "Accessibility &\nUser Experience",
                     className: "category",
                     children: [
-                        { name: "Simplified UI mode" },
-                        { name: "Quick toggle buttons" },
-                        { name: "Slash commands" },
-                        { name: "Minimap integration" },
-                        { name: "In-game configuration windows" },
-                        { name: "Visual accessibility options" },
-                        { name: "Reduced complexity modes" },
-                        { name: "Tooltips & help system" },
-                        { name: "Undo/redo for configuration" },
-                        { name: "Feature toggles per viewer type" },
-                        { name: "Shareable configuration strings" }
+                        { name: "Simplified UI mode", description: "A streamlined interface showing only essential options for users who don't want to dive into advanced configuration." },
+                        { name: "Quick toggle buttons", description: "One-click buttons to show/hide entire categories, enable combat-only mode, or toggle between profiles." },
+                        { name: "Slash commands", description: "Type commands like /cdm config or /cdm toggle to quickly access settings without clicking through menus." },
+                        { name: "Minimap integration", description: "Access addon settings via the minimap button or addon compartment for convenient configuration." },
+                        { name: "In-game configuration windows", description: "Configure everything without leaving the game using intuitive panels that update in real-time." },
+                        { name: "Visual accessibility options", description: "High contrast modes, larger text and icons, reduced animations for users with visual processing needs." },
+                        { name: "Reduced complexity modes", description: "Simplified modes for users with sensory processing issues or those who prefer minimal visual information." },
+                        { name: "Tooltips & help system", description: "Hover over any option to see an explanation of what it does and how it affects your tracking." },
+                        { name: "Undo/redo for configuration", description: "Made a mistake while configuring? Undo recent changes or redo them if you changed your mind." },
+                        { name: "Feature toggles per viewer type", description: "Enable or disable specific features independently for Essential, Utility, Buff Icons, and Buff Bars." },
+                        { name: "Shareable configuration strings", description: "Generate encoded strings of your configuration that can be shared on Discord, forums, or in-game chat." }
                     ]
                 },
                 {
                     name: "Integration &\nCompatibility",
                     className: "category",
                     children: [
-                        { name: "API for other addons" },
-                        { name: "LibSharedMedia support" },
-                        { name: "Third-party unit frame anchoring" },
-                        { name: "Compatibility toggles" },
-                        { name: "ElvUI auto-compatibility mode" },
-                        { name: "WeakAuras integration" },
-                        { name: "Main action bar hiding option" },
-                        { name: "Conflict resolution system" }
+                        { name: "API for other addons", description: "Developers can extend the addon with custom anchors, tracking categories, or integration with their own addons." },
+                        { name: "LibSharedMedia support", description: "Access additional fonts, textures, and borders from the LibSharedMedia library used by many popular addons." },
+                        { name: "Third-party unit frame anchoring", description: "Attach trackers to ElvUI, Shadowed Unit Frames, or other unit frame addons with automatic detection." },
+                        { name: "Compatibility toggles", description: "Enable/disable specific features to work around conflicts with other UI addons automatically." },
+                        { name: "ElvUI auto-compatibility mode", description: "Detects ElvUI and automatically adjusts styling and positioning to match ElvUI's aesthetic and behavior." },
+                        { name: "WeakAuras integration", description: "Import WeakAuras tracking configurations or export your setup to WeakAuras format for maximum flexibility." },
+                        { name: "Main action bar hiding option", description: "Hide Blizzard's main action bar while using Cooldown Manager so you don't have duplicate ability displays." },
+                        { name: "Conflict resolution system", description: "Automatically detects conflicts with other addons and offers solutions or temporary workarounds." }
                     ]
                 },
                 {
                     name: "Advanced Tracking\nFeatures",
                     className: "category",
                     children: [
-                        { name: "Multi-target tracking" },
-                        { name: "Buff/debuff source tracking" },
-                        { name: "Range indicators" },
-                        { name: "GCD tracking visualization" },
-                        { name: "Internal cooldown (ICD) tracking" },
-                        { name: "Combo point/resource builder differentiation" },
-                        { name: "Stacking buffs with breakpoints" },
-                        { name: "Aura filtering by caster" },
-                        { name: "Dispellable debuff highlighting" }
+                        { name: "Multi-target tracking", description: "Track your debuffs on multiple enemies simultaneously, showing which targets have your DoTs or debuffs applied." },
+                        { name: "Buff/debuff source tracking", description: "See who cast a specific buff or debuff (useful for tracking which healer gave you Power Infusion or Bloodlust)." },
+                        { name: "Range indicators", description: "Dim or recolor abilities when your target is out of range so you know before trying to cast." },
+                        { name: "GCD tracking visualization", description: "Separate global cooldown visualization that shows the 1.5s GCD independently from ability-specific cooldowns." },
+                        { name: "Internal cooldown (ICD) tracking", description: "Track the internal cooldowns on trinket procs and set bonuses that don't show in normal cooldown displays." },
+                        { name: "Combo point/resource builder differentiation", description: "Visually distinguish between abilities that generate resources and those that spend them." },
+                        { name: "Stacking buffs with breakpoints", description: "Highlight or show special indicators when stacking buffs reach important thresholds (3 stacks, 5 stacks, max stacks)." },
+                        { name: "Aura filtering by caster", description: "Show only YOUR debuffs on enemies, filtering out other players' DoTs to reduce clutter." },
+                        { name: "Dispellable debuff highlighting", description: "Automatically highlight debuffs that you can dispel with special borders or colors for quick identification." }
                     ]
                 },
                 {
                     name: "Performance &\nQuality of Life",
                     className: "category",
                     children: [
-                        { name: "Auto-adjust width for bars" },
-                        { name: "No-bloat optimization" },
-                        { name: "Direct settings access" },
-                        { name: "Memory & CPU optimization" },
-                        { name: "Lazy loading for config panels" },
-                        { name: "Performance monitoring dashboard" },
-                        { name: "Cache management" },
-                        { name: "Combat lockdown handling" },
-                        { name: "Smart update throttling" }
+                        { name: "Auto-adjust width for bars", description: "Power and cast bars automatically resize to fit your layout without manual width adjustments." },
+                        { name: "No-bloat optimization", description: "Efficient code that minimizes memory usage and CPU impact for smooth performance even in 40-player raids." },
+                        { name: "Direct settings access", description: "Quick access commands that open specific settings panels directly without navigating through multiple menus." },
+                        { name: "Memory & CPU optimization", description: "Advanced memory pooling and efficient update cycles to keep addon performance impact minimal." },
+                        { name: "Lazy loading for config panels", description: "Configuration panels only load when you open them, reducing initial load time and memory usage." },
+                        { name: "Performance monitoring dashboard", description: "Built-in tools to monitor the addon's memory usage, update frequency, and performance impact." },
+                        { name: "Cache management", description: "Intelligent caching of frequently accessed data (spell info, item details) to reduce API calls and improve responsiveness." },
+                        { name: "Combat lockdown handling", description: "Queues configuration changes made during combat to apply automatically when you leave combat." },
+                        { name: "Smart update throttling", description: "Reduces unnecessary frame updates by only refreshing when values actually change, not every frame." }
                     ]
                 }
             ]
@@ -350,7 +387,33 @@
             const nodeEnter = node.enter().append("g")
                 .attr("class", d => `node ${d.data.className || ''}`)
                 .attr("transform", d => `translate(${source.y0},${source.x0})`)
-                .on("click", click);
+                .on("click", click)
+                .on("mouseover", function(event, d) {
+                    if (d.data.description) {
+                        const tooltip = document.getElementById('featureTooltip');
+                        tooltip.querySelector('.feature-name').textContent = d.data.name;
+                        tooltip.querySelector('.feature-description').textContent = d.data.description;
+                        tooltip.classList.add('visible');
+                        
+                        const x = event.pageX + 15;
+                        const y = event.pageY + 15;
+                        tooltip.style.left = x + 'px';
+                        tooltip.style.top = y + 'px';
+                    }
+                })
+                .on("mouseout", function() {
+                    const tooltip = document.getElementById('featureTooltip');
+                    tooltip.classList.remove('visible');
+                })
+                .on("mousemove", function(event, d) {
+                    if (d.data.description) {
+                        const tooltip = document.getElementById('featureTooltip');
+                        const x = event.pageX + 15;
+                        const y = event.pageY + 15;
+                        tooltip.style.left = x + 'px';
+                        tooltip.style.top = y + 'px';
+                    }
+                });
 
             nodeEnter.append("circle")
                 .attr("r", d => d.depth === 0 ? 12 : d.depth === 1 ? 8 : 5)
