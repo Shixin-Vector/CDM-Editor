@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cooldown Manager - Refined Feature Set (80 Features, ≥90% Viable)</title>
+    <title>Cooldown Manager - Final Feature Set (81 Features, ≥90% Viable)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js" integrity="sha512-M7nHCiNUOwFt6Us3r8alutZLm9qMt4s9951uo8jqO4UwJ1hziseL6O3ndFyigx6+LREfZqnhHxYjKRJ8ZQ69DQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <style>
         body {
@@ -209,16 +209,16 @@
 </head>
 <body>
     <div id="header">
-        <h1>🎮 Cooldown Manager - Refined Feature Set</h1>
-        <p>Interactive Feature Mindmap | WoW 12.0.0 (Midnight) Compatibility Assessment</p>
+        <h1>🎮 Cooldown Manager - Final Feature Set</h1>
+        <p>Interactive Feature Mindmap | WoW 12.0.0 (Midnight) Compatibility Assessment | Now with Threat Bar!</p>
         <div id="stats">
             <div class="stat">
                 <div class="stat-label">Total Features</div>
-                <div class="stat-value">80</div>
+                <div class="stat-value">81</div>
             </div>
             <div class="stat">
                 <div class="stat-label">Avg Viability</div>
-                <div class="stat-value">99.5%</div>
+                <div class="stat-value">99.4%</div>
             </div>
             <div class="stat">
                 <div class="stat-label">Min Viability</div>
@@ -246,12 +246,32 @@
     <div class="tooltip"></div>
 
     <script>
-        // Check if D3 loaded
-        if (typeof d3 === 'undefined') {
-            document.body.innerHTML = '<div style="padding: 40px; text-align: center; font-family: sans-serif;"><h1>Error Loading Visualization</h1><p>The D3.js library failed to load. Please check your internet connection and refresh the page.</p></div>';
-            throw new Error('D3.js failed to load');
-        }
+        // Wait for DOM and check D3
+        document.addEventListener('DOMContentLoaded', function() {
+            // Give a moment for external script to load
+            setTimeout(function() {
+                if (typeof d3 === 'undefined') {
+                    document.body.innerHTML = `
+                        <div style="padding: 40px; text-align: center; font-family: sans-serif; background: #1e3c72; color: white; min-height: 100vh;">
+                            <h1>❌ D3.js Library Failed to Load</h1>
+                            <p style="font-size: 18px; margin: 20px 0;">The visualization library could not be loaded from the CDN.</p>
+                            <p style="font-size: 14px; color: #a0aec0;">Possible causes:</p>
+                            <ul style="text-align: left; max-width: 500px; margin: 20px auto; color: #a0aec0;">
+                                <li>No internet connection</li>
+                                <li>Firewall or content blocker preventing CDN access</li>
+                                <li>Browser security settings</li>
+                            </ul>
+                            <p style="font-size: 14px; color: #4ade80; margin-top: 30px;">✅ Solution: Use the simplified "cooldown-manager-feature-list.html" file instead (no external dependencies)</p>
+                        </div>
+                    `;
+                    return;
+                }
+                // D3 loaded successfully, initialize
+                initializeMindmap();
+            }, 100);
+        });
 
+        function initializeMindmap() {
         // Load feature data
         const data = {
     name: "Cooldown Manager\nRefined Feature Set",
@@ -592,6 +612,10 @@
                 { 
                     name: "Combo point/resource builder differentiation", 
                     description: "Visually distinguish between abilities that generate resources and those that spend them.\n\n✅ Viability: 100% - Spell categorization via static data or spell info"
+                },
+                { 
+                    name: "Threat/Aggro bar tracking", 
+                    description: "Visual status bar showing player's threat percentage in combat. Auto-appears on combat start, fills 0-100% based on threat level, color-codes from green (safe) → yellow (warning) → red (tanking). Shows 'TANKING' at 100% aggro. Particularly useful for tanks and threat-sensitive DPS.\n\n✅ Viability: 95% - UnitDetailedThreatSituation() available for player's target. Some restrictions on nameplate scanning in WoW 12.0 but player threat data is whitelisted. Recommended implementation focuses on player's current target."
                 }
             ]
         },
@@ -645,7 +669,7 @@
         const height = window.innerHeight - 120;
 
         // Create SVG
-        const svg = d3.select("#mindmap")
+        svg = d3.select("#mindmap")
             .append("svg")
             .attr("width", width)
             .attr("height", height);
@@ -653,7 +677,7 @@
         const g = svg.append("g");
 
         // Create zoom behavior
-        const zoom = d3.zoom()
+        zoom = d3.zoom()
             .scaleExtent([0.1, 3])
             .on("zoom", (event) => {
                 g.attr("transform", event.transform);
@@ -667,7 +691,7 @@
             .separation((a, b) => (a.parent === b.parent ? 1 : 1.2));
 
         // Create hierarchy
-        const root = d3.hierarchy(data);
+        root = d3.hierarchy(data);
         root.x0 = height / 2;
         root.y0 = 0;
 
@@ -795,8 +819,19 @@
             }
         }
 
-        // Expand all
+        // Initial render
+        update(root);
+
+        // Center initial view
+        svg.call(zoom.transform, d3.zoomIdentity.translate(100, height / 2));
+        
+        } // End of initializeMindmap()
+
+        // Global functions for button controls (must be outside initializeMindmap)
+        let root, update, collapse, zoom, svg;
+
         function expandAll() {
+            if (!root) return;
             function expandRecursive(d) {
                 if (d._children) {
                     d.children = d._children;
@@ -810,24 +845,19 @@
             update(root);
         }
 
-        // Collapse all
         function collapseAll() {
+            if (!root) return;
             root.children.forEach(collapse);
             update(root);
         }
 
-        // Reset zoom
         function resetZoom() {
+            if (!svg || !zoom) return;
+            const height = window.innerHeight - 120;
             svg.transition()
                 .duration(750)
                 .call(zoom.transform, d3.zoomIdentity.translate(100, height / 2));
         }
-
-        // Initial render
-        update(root);
-
-        // Center initial view
-        svg.call(zoom.transform, d3.zoomIdentity.translate(100, height / 2));
     </script>
 </body>
 </html>
