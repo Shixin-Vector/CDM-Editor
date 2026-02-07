@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CDM Editor Plus - UI Element Mindmap</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            overflow: hidden;
+        }
+
+        #header {
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 15px 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        #header h1 {
+            margin: 0 0 5px 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        #header p {
+            margin: 0;
+            font-size: 14px;
+            color: #a0aec0;
+        }
+
+        #stats {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .stat {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 5px 15px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .stat-label {
+            color: #a0aec0;
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            color: #4ade80;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        #controls {
+            background: rgba(0, 0, 0, 0.9);
+            padding: 10px 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        #mindmap {
+            width: 100%;
+            height: calc(100vh - 140px);
+        }
+
+        .node circle {
+            fill: #fff;
+            stroke: steelblue;
+            stroke-width: 3px;
+            cursor: pointer;
+        }
+
+        .node.ui-element circle {
+            fill: #4ade80;
+            stroke: #22c55e;
+            stroke-width: 4px;
+        }
+
+        .node.subcategory circle {
+            fill: #fbbf24;
+            stroke: #f59e0b;
+            stroke-width: 3px;
+        }
+
+        .node.root circle {
+            fill: #667eea;
+            stroke: #764ba2;
+            stroke-width: 5px;
+        }
+
+        .node text {
+            font: 12px sans-serif;
+            fill: white;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+        }
+
+        .link {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.4);
+            stroke-width: 2px;
+        }
+
+        .tooltip {
+            position: absolute;
+            text-align: left;
+            padding: 12px;
+            font: 12px sans-serif;
+            background: rgba(0, 0, 0, 0.95);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            pointer-events: none;
+            max-width: 400px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            line-height: 1.5;
+        }
+
+        .tooltip strong {
+            color: #4ade80;
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .viability-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 700;
+            margin-left: 6px;
+        }
+
+        .v100 { background: #22c55e; color: #000; }
+        .v95 { background: #84cc16; color: #000; }
+        .v90 { background: #fbbf24; color: #000; }
+        .v70 { background: #fb923c; color: #000; }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <h1>🎮 CDM Editor Plus - UI Element Mindmap</h1>
+        <p>Interactive D3.js visualization organized by user interface component</p>
+        <div id="stats">
+            <div class="stat">
+                <div class="stat-label">Features</div>
+                <div class="stat-value">93</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">UI Elements</div>
+                <div class="stat-value">8</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Viability</div>
+                <div class="stat-value">98.7%</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="controls">
+        <button onclick="expandAll()">Expand All</button>
+        <button onclick="collapseAll()">Collapse All</button>
+        <button onclick="resetZoom()">Reset View</button>
+    </div>
+
+    <div id="mindmap"></div>
+
+    <script>
+        // Check D3 loaded
+        if (typeof d3 === 'undefined') {
+            document.body.innerHTML = '<div style="padding: 40px; text-align: center; color: white;"><h1>D3.js failed to load</h1><p>Please check your internet connection and refresh.</p></div>';
+            throw new Error('D3.js not loaded');
+        }
+
+        // Embedded data
+        const treeData = {
+            name: "CDM Editor Plus",
+            className: "root",
+            children: [
+                {
+                    name: "Aura Farm",
+                    className: "ui-element",
+                    children: [
+                        { name: "Multiple layout patterns", description: "Grid, rows, columns, bars, free-form.\n\nViability: 100%" },
+                        { name: "Growth direction control", description: "Horizontal/vertical, L→R/R→L/Up/Down.\n\nViability: 100%" },
+                        { name: "Dynamic centered layout", description: "Auto-reposition and center, no gaps.\n\nViability: 100%" },
+                        { name: "Icon size 16-64px", description: "Adjustable icon size.\n\nViability: 100%" },
+                        { name: "Icon spacing 0-20px", description: "Pixel spacing control.\n\nViability: 100%" },
+                        { name: "Border customization", description: "Blizzard, PixelPerfect, Masque.\n\nViability: 100%" },
+                        { name: "Disable yellow swipe", description: "Hide buff duration swipe.\n\nViability: 100%" },
+                        { name: "Filter by type", description: "Buffs/debuffs/magic/physical/etc.\n\nViability: 95%" },
+                        { name: "Filter by duration", description: "Permanent/short/medium/long.\n\nViability: 95%" },
+                        { name: "Filter by name", description: "Whitelist/blacklist/keyword.\n\nViability: 100%" },
+                        { name: "Filter by source", description: "Self/others/specific player.\n\nViability: 70%" },
+                        { name: "Sort options", description: "Time/name/priority/stacks.\n\nViability: 100%" },
+                        { name: "Duration text", description: "MM:SS or seconds, custom font.\n\nViability: 100%" },
+                        { name: "Stack count", description: "Show stacks with custom style.\n\nViability: 100%" },
+                        { name: "Color coding", description: "Border colors by aura type.\n\nViability: 100%" },
+                        { name: "Dispellable highlight", description: "Bright border on dispellable.\n\nViability: 90%" },
+                        { name: "Aura bars mode", description: "Horizontal bars alternative.\n\nViability: 100%" },
+                        { name: "Weapon enchants", description: "Separate section for enchants.\n\nViability: 100%" },
+                        { name: "Boss debuff priority", description: "Auto-prioritize boss debuffs.\n\nViability: 95%" },
+                        { name: "Hide Blizzard default", description: "Hide default BuffFrame.\n\nViability: 100%" }
+                    ]
+                },
+                {
+                    name: "Resource Bars",
+                    className: "ui-element",
+                    children: [
+                        { name: "All resource types", description: "Mana/Rage/Energy/Focus/etc.\n\nViability: 100%" },
+                        { name: "Bar size control", description: "100-500×10-50px adjustable.\n\nViability: 100%" },
+                        { name: "Orientation", description: "Horizontal/vertical with fill direction.\n\nViability: 100%" },
+                        { name: "LSM textures", description: "Blizzard/Smooth/Empath/Grizzly.\n\nViability: 100%" },
+                        { name: "Border & background", description: "Custom border/background style.\n\nViability: 100%" },
+                        { name: "Text display", description: "Current/max/percentage options.\n\nViability: 100%" },
+                        { name: "Font customization", description: "LSM fonts, 8-32px, outline.\n\nViability: 100%" },
+                        { name: "Color options", description: "Default/class/custom/gradient.\n\nViability: 100%" },
+                        { name: "Threshold markers", description: "Lines at specific amounts.\n\nViability: 100%" },
+                        { name: "Low warning", description: "Flash/color when low.\n\nViability: 100%" },
+                        { name: "Skyriding Bar", description: "Customizable vigor bar for Skyriding mounts. Auto-appears when mounting Skyriding-capable flying mount. Shows 3-6 vigor segments, recharge timers, and Thrill of the Skies stacks. Custom size, colors, position. Hide on regular flying mounts.\n\nViability: 100%" },
+                        { name: "Combo Points", description: "5-7 segmented points.\n\nViability: 100%" },
+                        { name: "Holy Power", description: "3-5 segments with glow.\n\nViability: 100%" },
+                        { name: "Soul Shards", description: "5 purple shards.\n\nViability: 100%" },
+                        { name: "Chi", description: "6 cyan/green segments.\n\nViability: 100%" },
+                        { name: "Arcane Charges", description: "4 blue/purple charges.\n\nViability: 100%" },
+                        { name: "Runes", description: "6 individual with cooldown.\n\nViability: 100%" },
+                        { name: "Essence", description: "0.0-5.0 with partial regen.\n\nViability: 100%" },
+                        { name: "Soul Fragments", description: "5 DH fragments.\n\nViability: 100%" },
+                        { name: "Animations", description: "Fade/pulse/flash/glow.\n\nViability: 100%" },
+                        { name: "Smart visibility", description: "Hide at full/out of combat.\n\nViability: 100%" }
+                    ]
+                },
+                {
+                    name: "Threat Meter",
+                    className: "ui-element",
+                    children: [
+                        { name: "Combat auto-show", description: "Appears in combat automatically.\n\nViability: 100%" },
+                        { name: "Threat 0-100%", description: "Shows current threat level.\n\nViability: 95%" },
+                        { name: "Color thresholds", description: "Green/Yellow/Red by threat.\n\nViability: 100%" },
+                        { name: "TANKING status", description: "Shows 'TANKING' at 100%.\n\nViability: 100%" },
+                        { name: "Bar customization", description: "Size, texture, border options.\n\nViability: 100%" },
+                        { name: "Update frequency", description: "0.1s-1.0s configurable.\n\nViability: 100%" },
+                        { name: "Target scanning", description: "Current target or nameplates.\n\nViability: 95%" },
+                        { name: "Role-based enable", description: "Auto for tanks, off for healers.\n\nViability: 100%" }
+                    ]
+                },
+                {
+                    name: "CD Manager Buffs",
+                    className: "ui-element",
+                    children: [
+                        { name: "Manual tracking", description: "Add any buff by name/ID.\n\nViability: 100%" },
+                        { name: "Priority list", description: "Important buffs always show.\n\nViability: 100%" },
+                        { name: "Icon display", description: "Icons with swipe/text/keybinds.\n\nViability: 100%" },
+                        { name: "Dynamic layout", description: "Auto-center, no gaps.\n\nViability: 100%" },
+                        { name: "Disable swipe", description: "Hide yellow swipe.\n\nViability: 100%" },
+                        { name: "Border styles", description: "Multiple border options.\n\nViability: 100%" },
+                        { name: "Duration format", description: "MM:SS or seconds.\n\nViability: 100%" },
+                        { name: "Warning animations", description: "Flash when expiring.\n\nViability: 100%" }
+                    ]
+                },
+                {
+                    name: "CD Manager Bars",
+                    className: "ui-element",
+                    children: [
+                        { name: "Horizontal bars", description: "Icon + name + fill + stacks.\n\nViability: 100%" },
+                        { name: "Bar size", description: "100-400×16-32px.\n\nViability: 100%" },
+                        { name: "Centered growth", description: "1=center, 2=even, 3=centered.\n\nViability: 100%" },
+                        { name: "LSM textures", description: "All LSM bar textures.\n\nViability: 100%" },
+                        { name: "Fill direction", description: "L→R/R→L/B→T/T→B.\n\nViability: 100%" },
+                        { name: "Bar colors", description: "Type/custom/gradient/threshold.\n\nViability: 100%" },
+                        { name: "Text display", description: "Name/duration/stacks.\n\nViability: 100%" },
+                        { name: "Text alignment", description: "Left/Center/Right.\n\nViability: 100%" },
+                        { name: "Sort by duration", description: "Auto-sort by time.\n\nViability: 100%" }
+                    ]
+                },
+                {
+                    name: "CD Manager CDs",
+                    className: "ui-element",
+                    children: [
+                        { name: "Spell ID toggle", description: "Show/hide by Spell ID.\n\nViability: 100%" },
+                        { name: "Manual add/remove", description: "Add any ability.\n\nViability: 100%" },
+                        { name: "Custom groups", description: "Create folders.\n\nViability: 100%" },
+                        { name: "Prioritization", description: "Drag-drop ordering.\n\nViability: 100%" },
+                        { name: "Class presets", description: "Pre-configured lists.\n\nViability: 100%" },
+                        { name: "Charge handling", description: "Multi-charge abilities.\n\nViability: 100%" },
+                        { name: "Icon mode", description: "Icons with swipe.\n\nViability: 100%" },
+                        { name: "Bar mode", description: "Horizontal/vertical bars.\n\nViability: 100%" },
+                        { name: "Pie chart mode", description: "Circular progress.\n\nViability: 100%" },
+                        { name: "Icon + Bar", description: "Show both simultaneously.\n\nViability: 100%" },
+                        { name: "Layout patterns", description: "Grid/rows/columns/free.\n\nViability: 100%" },
+                        { name: "Dynamic adaptive", description: "Auto-reposition.\n\nViability: 100%" },
+                        { name: "Growth direction", description: "Up/down/left/right.\n\nViability: 100%" },
+                        { name: "Icon sizes", description: "16-128px custom.\n\nViability: 100%" },
+                        { name: "Borders", description: "Multiple styles.\n\nViability: 100%" },
+                        { name: "Masque support", description: "Apply Masque skins.\n\nViability: 100%" },
+                        { name: "Keybind display", description: "Show keybinds on icons.\n\nViability: 100%" },
+                        { name: "Swipe colors", description: "Custom cooldown colors.\n\nViability: 100%" },
+                        { name: "Proc glow", description: "Glow when ready.\n\nViability: 100%" },
+                        { name: "Conditional display", description: "Combat/instance/role-based.\n\nViability: 100%" }
+                    ]
+                },
+                {
+                    name: "Utility CDs",
+                    className: "ui-element",
+                    children: [
+                        { name: "Auto trinkets", description: "Auto-detect trinkets.\n\nViability: 100%" },
+                        { name: "Consumables", description: "Potions/healthstones/bandages.\n\nViability: 100%" },
+                        { name: "Profession items", description: "Engineering/alchemy/drums.\n\nViability: 100%" },
+                        { name: "Hearthstones", description: "All hearthstone types.\n\nViability: 100%" },
+                        { name: "Low stock warning", description: "Alert when <5 items.\n\nViability: 100%" },
+                        { name: "Auto bag scan", description: "Auto-detect items.\n\nViability: 100%" },
+                        { name: "Filter by type", description: "Potions/food/etc.\n\nViability: 100%" },
+                        { name: "Priority order", description: "Sort by importance.\n\nViability: 100%" }
+                    ]
+                },
+                {
+                    name: "Misc UI",
+                    className: "ui-element",
+                    children: [
+                        { name: "GCD cursor reticle", description: "GCD ring around cursor.\n\nViability: 100%" },
+                        { name: "Reticle styles", description: "Ring/segmented/crosshair.\n\nViability: 100%" },
+                        { name: "PixelSnap system", description: "Pixel-perfect rendering.\n\nViability: 100%" },
+                        { name: "Collapsible settings", description: "Minimize config panel.\n\nViability: 100%" },
+                        { name: "In-game config", description: "Real-time configuration.\n\nViability: 100%" },
+                        { name: "Spell picker UI", description: "Browse/search spells.\n\nViability: 100%" },
+                        { name: "Profile manager", description: "Create/import/export.\n\nViability: 100%" },
+                        { name: "Drag positioning", description: "Click and drag frames.\n\nViability: 100%" },
+                        { name: "Alignment guides", description: "Visual positioning guides.\n\nViability: 100%" },
+                        { name: "LibSharedMedia", description: "LSM-3.0 integration.\n\nViability: 100%" },
+                        { name: "ElvUI compatible", description: "Auto-detect ElvUI.\n\nViability: 100%" },
+                        { name: "Masque support", description: "Masque skin support.\n\nViability: 100%" },
+                        { name: "Press-hold casting", description: "Toggle WoW option.\n\nViability: 100%" },
+                        { name: "Minimap button", description: "Quick access button.\n\nViability: 100%" },
+                        { name: "Slash commands", description: "/cdm commands.\n\nViability: 100%" },
+                        { name: "Performance monitor", description: "Track memory/CPU.\n\nViability: 100%" }
+                    ]
+                }
+            ]
+        };
+
+        // Setup
+        const width = window.innerWidth;
+        const height = window.innerHeight - 140;
+
+        const tree = d3.tree().size([height, width - 300]);
+
+        const svg = d3.select("#mindmap")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .append("g")
+            .attr("transform", "translate(150,0)");
+
+        const root = d3.hierarchy(treeData);
+        root.x0 = height / 2;
+        root.y0 = 0;
+
+        // Collapse all children initially
+        function collapse(d) {
+            if (d.children) {
+                d._children = d.children;
+                d._children.forEach(collapse);
+                d.children = null;
+            }
+        }
+        root.children.forEach(collapse);
+
+        // Tooltip
+        const tooltip = d3.select("body").append("div")
+            .attr("class", "tooltip")
+            .style("opacity", 0);
+
+        let root_global = root;
+        let svg_global = svg;
+
+        function update(source) {
+            const treeData = tree(root);
+            const nodes = treeData.descendants();
+            const links = treeData.descendants().slice(1);
+
+            nodes.forEach(d => d.y = d.depth * 200);
+
+            const node = svg.selectAll('g.node')
+                .data(nodes, d => d.id || (d.id = ++i));
+
+            const nodeEnter = node.enter().append('g')
+                .attr('class', d => `node ${d.data.className || ''}`)
+                .attr("transform", d => `translate(${source.y0},${source.x0})`)
+                .on('click', click)
+                .on('mouseover', function(event, d) {
+                    if (d.data.description) {
+                        const viability = d.data.description.match(/Viability: (\d+)%/);
+                        const v = viability ? viability[1] : '100';
+                        const vClass = v === '100' ? 'v100' : v === '95' ? 'v95' : v === '90' ? 'v90' : 'v70';
+                        
+                        tooltip.transition().duration(200).style("opacity", 1);
+                        tooltip.html(`<strong>${d.data.name} <span class="viability-badge ${vClass}">${v}%</span></strong>${d.data.description.replace(/Viability: \d+%/, '')}`)
+                            .style("left", (event.pageX + 10) + "px")
+                            .style("top", (event.pageY - 10) + "px");
+                    }
+                })
+                .on('mouseout', function() {
+                    tooltip.transition().duration(200).style("opacity", 0);
+                });
+
+            nodeEnter.append('circle')
+                .attr('r', d => d.data.className === 'root' ? 12 : d.data.className === 'ui-element' ? 8 : 5)
+                .style("fill", d => d._children ? "#fff" : "#fff");
+
+            nodeEnter.append('text')
+                .attr("dy", ".35em")
+                .attr("x", d => d.children || d._children ? -13 : 13)
+                .attr("text-anchor", d => d.children || d._children ? "end" : "start")
+                .text(d => d.data.name);
+
+            const nodeUpdate = nodeEnter.merge(node);
+
+            nodeUpdate.transition()
+                .duration(750)
+                .attr("transform", d => `translate(${d.y},${d.x})`);
+
+            nodeUpdate.select('circle')
+                .attr('r', d => d.data.className === 'root' ? 12 : d.data.className === 'ui-element' ? 8 : 5)
+                .style("fill", d => d._children ? "#fff" : "#fff");
+
+            const nodeExit = node.exit().transition()
+                .duration(750)
+                .attr("transform", d => `translate(${source.y},${source.x})`)
+                .remove();
+
+            nodeExit.select('circle').attr('r', 0);
+            nodeExit.select('text').style('fill-opacity', 0);
+
+            const link = svg.selectAll('path.link')
+                .data(links, d => d.id);
+
+            const linkEnter = link.enter().insert('path', "g")
+                .attr("class", "link")
+                .attr('d', d => {
+                    const o = {x: source.x0, y: source.y0};
+                    return diagonal(o, o);
+                });
+
+            const linkUpdate = linkEnter.merge(link);
+
+            linkUpdate.transition()
+                .duration(750)
+                .attr('d', d => diagonal(d, d.parent));
+
+            link.exit().transition()
+                .duration(750)
+                .attr('d', d => {
+                    const o = {x: source.x, y: source.y};
+                    return diagonal(o, o);
+                })
+                .remove();
+
+            nodes.forEach(d => {
+                d.x0 = d.x;
+                d.y0 = d.y;
+            });
+
+            function diagonal(s, d) {
+                return `M ${s.y} ${s.x}
+                        C ${(s.y + d.y) / 2} ${s.x},
+                          ${(s.y + d.y) / 2} ${d.x},
+                          ${d.y} ${d.x}`;
+            }
+        }
+
+        let i = 0;
+        function click(event, d) {
+            if (d.children) {
+                d._children = d.children;
+                d.children = null;
+            } else {
+                d.children = d._children;
+                d._children = null;
+            }
+            update(d);
+        }
+
+        function expandAll() {
+            function expand(d) {
+                if (d._children) {
+                    d.children = d._children;
+                    d._children = null;
+                }
+                if (d.children) d.children.forEach(expand);
+            }
+            expand(root_global);
+            update(root_global);
+        }
+
+        function collapseAll() {
+            root_global.children.forEach(collapse);
+            update(root_global);
+        }
+
+        function resetZoom() {
+            svg_global.transition()
+                .duration(750)
+                .attr("transform", "translate(150,0)");
+        }
+
+        update(root);
+    </script>
+</body>
+</html>
